@@ -1,0 +1,78 @@
+# Batch mode for mothur 
+#make.file already run to generate stability.files containing all of the paired end reads
+
+make.contigs(file=stability.files, processors=10) 
+# makes the contig files and combines the forward and reverse reads
+
+summary.seqs(fasta=stability.trim.contigs.fasta)
+# summary of the reads
+
+screen.seqs(fasta=stability.trim.contigs.fasta, group=stability.contigs.groups, maxambig=0, maxlength=275)
+# screen out the reads that aren't the right length or too many ambigs
+
+unique.seqs(fasta=stability.trim.contigs.good.fasta)
+# get the unique seqs to avoid duplicates
+
+count.seqs(name=stability.trim.contigs.good.names, group=stability.contigs.good.groups)
+# make a count table
+
+pcr.seqs(fasta=silva.bacteria.fasta, start=11894, end=25319, keepdots=F)
+# make the database only look for the V4 region
+
+rename.file(input=silva.bacteria.pcr.fasta, new=silva_132.v4.fasta)
+# rename the file to something recognizable
+
+align.seqs(fasta=stability.trim.contigs.good.unique.fasta, reference=silva_132.v4.fasta)
+# align our reads to match the database for V4 reads
+
+summary.seqs(fasta=stability.trim.contigs.good.unique.align, count=stability.trim.contigs.good.count_table)
+# run summary.seqs again
+
+screen.seqs(fasta=stability.trim.contigs.good.unique.align, count=stability.trim.contigs.good.count_table, summary=stability.trim.contigs.good.unique.summary, start=1968, end=11550, maxhomop=8)
+#trim reads outside of the normal start and end, and remove sequences that have >8 base pairs that repeat
+
+filter.seqs(fasta=stability.trim.contigs.good.unique.good.align, vertical=T, trump=.)
+# filter out extra characters and overhang
+
+unique.seqs(fasta=stability.trim.contigs.good.unique.good.filter.fasta, count=stability.trim.contigs.good.good.count_table)
+# rerun unique seqs
+
+pre.cluster(fasta=stability.trim.contigs.good.unique.good.filter.unique.fasta, count=stability.trim.contigs.good.unique.good.filter.count_table, diffs=2)
+# pre-cluster allowing for 2 differences for sample
+
+chimera.vsearch(fasta=stability.trim.contigs.good.unique.good.filter.unique.precluster.fasta, count=stability.trim.contigs.good.unique.good.filter.unique.precluster.count_table, dereplicate=t)
+# identify chimeras and remove them from the count table
+
+remove.seqs(fasta=stability.trim.contigs.good.unique.good.filter.unique.precluster.fasta, accnos=stability.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.accnos)
+# remove the chimeras from the fasta files
+
+summary.seqs(fasta=current, count=current)
+# see what we're left with
+
+classify.seqs(fasta=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.fasta, count=stability.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.count_table, reference=trainset18_062020.fa, taxonomy=trainset18_062020.tax, cutoff=80)
+# assigning taxonomy to our samples
+
+remove.lineage(fasta=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.fasta, count=stability.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.count_table, taxonomy=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.trainset18_062020.wang.taxonomy, taxon=Chloroplast-Mitochondria-unknown-Archaea-Eukaryota)
+# removing non-bacteria
+
+dist.seqs(fasta=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta, cutoff=0.03)
+
+cluster(column=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.dist, count=stability.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.count_table)
+# create the OTUs
+
+# cluster.split(column=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.dist, count=stability.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.count_table, taxonomy=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.trainset18_062020.wang.taxonomy, splitmethod=classify, taxlevel=5, cutoff=0.03)
+# try cluster.split if the dist file is too big. No need to run both cluster and cluster.split
+
+make.shared(list=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.list, count=stability.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.count_table, label=0.03)
+# how many sequences are in each OTU from each group
+
+classify.otu(list=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.list, count=stability.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.count_table, taxonomy=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.trainset18_062020.wang.pick.taxonomy, label=0.03)
+
+get.oturep(column=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.dist, list=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.list, count=stability.trim.contigs.good.unique.good.filter.unique.precluster.denovo.vsearch.pick.pick.count_table, fasta=stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.fasta)
+# get sequences for each OTU
+
+
+# Output files used for analysis:
+# stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.0.03.cons.taxonomy (tax table)
+# stability.trim.contigs.good.unique.good.filter.unique.precluster.pick.pick.opti_mcc.shared (OTU table)
+ 
