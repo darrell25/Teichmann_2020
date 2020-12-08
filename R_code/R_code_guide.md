@@ -19,7 +19,7 @@ FF2_diversity.R
 was used to measure and compare alpha (Shannon, Inverse Simpson, Faith) and beta (Bray-Curtis, Aitchison, Weighted UniFrac) diversity across treatments and between treatments and controls. 
 
 Correlation Analysis
-1) FF2_but_SCFA_corr.R and 2) FF2_Microbiome_Ferm_corr.R
+(1) FF2_but_SCFA_corr.R and (2) FF2_Microbiome_Ferm_corr.R
 were (1) used to determine correlations between butyrate and other fermentation products and pH 
 and (2) used to determine correlations between butyrate producing organisms and butyrate levels, lactate levels, pH and RS degrading organisms
 
